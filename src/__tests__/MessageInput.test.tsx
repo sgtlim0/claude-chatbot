@@ -17,7 +17,7 @@ vi.mock("@/features/send-message/sendMessage", () => ({
 describe("MessageInput", () => {
   it("renders input and send button", () => {
     render(<MessageInput />);
-    expect(screen.getByPlaceholderText("Ask anything...")).toBeDefined();
+    expect(screen.getByPlaceholderText("Message...")).toBeDefined();
     expect(screen.getByLabelText("Send message")).toBeDefined();
   });
 
@@ -35,7 +35,7 @@ describe("MessageInput", () => {
 
   it("enables send when text entered", () => {
     render(<MessageInput />);
-    const input = screen.getByPlaceholderText("Ask anything...");
+    const input = screen.getByPlaceholderText("Message...");
     fireEvent.change(input, { target: { value: "Hello" } });
     const btn = screen.getByLabelText("Send message");
     expect(btn.hasAttribute("disabled")).toBe(false);

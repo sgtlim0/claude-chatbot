@@ -99,9 +99,14 @@ export function ChatWindow() {
   if (messages.length === 0) {
     return (
       <div ref={parentRef} className="flex-1 overflow-y-auto relative">
-        <div className="flex flex-col items-center justify-center h-full text-text-muted gap-3">
-          <h2 className="text-2xl font-semibold text-text-secondary m-0">Ask anything</h2>
-          <p className="text-sm m-0">Start a conversation by typing a message below.</p>
+        <div className="flex flex-col items-center justify-center h-full gap-4 px-4">
+          <div className="w-10 h-10 rounded-full bg-accent-light flex items-center justify-center">
+            <span className="text-accent text-lg font-semibold">C</span>
+          </div>
+          <h2 className="text-xl font-medium text-text-primary m-0">How can I help you today?</h2>
+          <p className="text-[14px] text-text-muted m-0 max-w-md text-center leading-relaxed">
+            Start a conversation by typing a message below. I can help with writing, analysis, coding, and more.
+          </p>
         </div>
       </div>
     );
@@ -113,7 +118,7 @@ export function ChatWindow() {
   return (
     <div ref={parentRef} className="flex-1 overflow-y-auto relative">
       <div
-        className="max-w-3xl mx-auto relative w-full"
+        className="max-w-[720px] mx-auto relative w-full"
         style={{ height: virtualizer.getTotalSize() }}
       >
         {virtualizer.getVirtualItems().map((virtualRow) => {
@@ -155,11 +160,11 @@ export function ChatWindow() {
 
       {showScrollBtn && (
         <button
-          className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-bg-tertiary border border-border text-text-primary cursor-pointer px-4 py-2 rounded-full text-[13px] flex items-center gap-1.5 z-10 shadow-md hover:bg-border transition-colors"
+          className="absolute bottom-5 left-1/2 -translate-x-1/2 bg-bg-primary border border-border text-text-secondary cursor-pointer px-3.5 py-2 rounded-full text-[12px] flex items-center gap-1.5 z-10 shadow-sm hover:bg-bg-secondary transition-colors"
           onClick={scrollToBottom}
           aria-label="Scroll to bottom"
         >
-          <ArrowDown size={14} /> Scroll to bottom
+          <ArrowDown size={13} /> New messages
         </button>
       )}
     </div>

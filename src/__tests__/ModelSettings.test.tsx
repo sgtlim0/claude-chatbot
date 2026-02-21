@@ -20,7 +20,7 @@ describe("ModelSettings", () => {
   it("calls onClose when close button clicked", () => {
     const onClose = vi.fn();
     render(<ModelSettings onClose={onClose} />);
-    fireEvent.click(screen.getByText("Close"));
+    fireEvent.click(screen.getByText("Done"));
     expect(onClose).toHaveBeenCalled();
   });
 

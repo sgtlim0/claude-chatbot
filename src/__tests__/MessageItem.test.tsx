@@ -34,14 +34,14 @@ describe("MessageItem", () => {
       <MessageItem message={userMessage} isLast={false} isStreaming={false} />
     );
     expect(screen.getByText("Hello world")).toBeDefined();
-    expect(screen.getByText("You")).toBeDefined();
+    // User message rendered as bubble without label
   });
 
   it("renders assistant message with markdown", () => {
     render(
       <MessageItem message={assistantMessage} isLast={false} isStreaming={false} />
     );
-    expect(screen.getByText("AI")).toBeDefined();
+    expect(screen.getByText("Assistant")).toBeDefined();
   });
 
   it("shows streaming cursor when streaming", () => {
@@ -49,7 +49,7 @@ describe("MessageItem", () => {
       <MessageItem message={assistantMessage} isLast={true} isStreaming={true} />
     );
     // Cursor element should be present
-    const container = screen.getByText("AI").closest("div")!.parentElement!;
+    const container = screen.getByText("Assistant").closest("div")!.parentElement!;
     expect(container.querySelector(".animate-\\[blink_0\\.8s_infinite\\]")).toBeDefined();
   });
 

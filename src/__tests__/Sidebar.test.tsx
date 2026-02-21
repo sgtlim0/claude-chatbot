@@ -40,12 +40,12 @@ describe("Sidebar", () => {
   it("renders when not collapsed", () => {
     render(<Sidebar collapsed={false} />);
     expect(screen.getByText("New Chat")).toBeDefined();
-    expect(screen.getByPlaceholderText("Search messages...")).toBeDefined();
+    expect(screen.getByText("Search")).toBeDefined();
   });
 
   it("has correct aria labels", () => {
     render(<Sidebar collapsed={false} />);
     expect(screen.getByLabelText("New chat")).toBeDefined();
-    expect(screen.getByLabelText("Search messages")).toBeDefined();
+    expect(screen.getByLabelText("Search")).toBeDefined();
   });
 });

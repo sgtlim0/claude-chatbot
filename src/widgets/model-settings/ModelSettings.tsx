@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useSettingsStore, AVAILABLE_MODELS } from "@/shared/store/settingsStore";
+import { X } from "lucide-react";
 
 interface ModelSettingsProps {
   onClose: () => void;
@@ -24,7 +25,7 @@ export function ModelSettings({ onClose }: ModelSettingsProps) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/30 backdrop-blur-sm flex items-center justify-center z-50"
+      className="fixed inset-0 bg-black/20 backdrop-blur-[2px] flex items-center justify-center z-50"
       onClick={onClose}
       role="dialog"
       aria-modal="true"
@@ -33,16 +34,25 @@ export function ModelSettings({ onClose }: ModelSettingsProps) {
       <div
         ref={panelRef}
         tabIndex={-1}
-        className="bg-bg-primary border border-border rounded-2xl p-7 w-[420px] max-w-[90vw] max-h-[80vh] overflow-y-auto shadow-xl outline-none"
+        className="bg-bg-primary border border-border rounded-2xl p-6 w-[440px] max-w-[90vw] max-h-[80vh] overflow-y-auto shadow-xl outline-none"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="m-0 mb-5 text-lg text-text-primary font-semibold">Settings</h2>
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="m-0 text-base text-text-primary font-semibold">Settings</h2>
+          <button
+            className="bg-transparent border-none text-text-muted cursor-pointer p-1 rounded-lg hover:bg-bg-tertiary hover:text-text-primary transition-colors"
+            onClick={onClose}
+            aria-label="Close settings"
+          >
+            <X size={18} />
+          </button>
+        </div>
 
         <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
           Model
         </label>
         <select
-          className="w-full p-2.5 bg-bg-tertiary border border-border rounded-lg text-text-primary text-sm outline-none mb-5 focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
+          className="w-full p-2.5 bg-bg-secondary border border-border rounded-xl text-text-primary text-[13px] outline-none mb-5 focus:border-accent appearance-none cursor-pointer"
           value={model}
           onChange={(e) => setModel(e.target.value)}
           aria-label="Select model"
@@ -58,17 +68,18 @@ export function ModelSettings({ onClose }: ModelSettingsProps) {
           System Prompt
         </label>
         <textarea
-          className="w-full p-2.5 bg-bg-tertiary border border-border rounded-lg text-text-primary text-[13px] font-inherit outline-none resize-y min-h-[80px] mb-5 focus:border-accent focus-visible:ring-2 focus-visible:ring-accent/30"
+          className="w-full p-3 bg-bg-secondary border border-border rounded-xl text-text-primary text-[13px] font-inherit outline-none resize-y min-h-[80px] mb-5 focus:border-accent"
           value={systemPrompt}
           onChange={(e) => setSystemPrompt(e.target.value)}
-          placeholder="System prompt for the AI..."
+          placeholder="Customize the assistant's behavior..."
           aria-label="System prompt"
         />
 
         <label className="block text-[13px] font-medium text-text-secondary mb-1.5">
-          Temperature
+          Temperature: {temperature}
         </label>
         <div className="flex items-center gap-3 mb-5">
+          <span className="text-[11px] text-text-muted">Precise</span>
           <input
             type="range"
             min="0"
@@ -76,20 +87,18 @@ export function ModelSettings({ onClose }: ModelSettingsProps) {
             step="0.1"
             value={temperature}
             onChange={(e) => setTemperature(Number(e.target.value))}
-            className="flex-1 accent-accent"
+            className="flex-1 accent-accent h-1.5"
             aria-label="Temperature"
           />
-          <span className="text-sm text-text-primary min-w-[32px] text-right">
-            {temperature}
-          </span>
+          <span className="text-[11px] text-text-muted">Creative</span>
         </div>
 
-        <div className="flex justify-end gap-2.5">
+        <div className="flex justify-end">
           <button
-            className="px-5 py-2.5 rounded-lg text-sm cursor-pointer border-none bg-bg-tertiary text-text-secondary hover:bg-border transition-colors focus-visible:ring-2 focus-visible:ring-accent/30"
+            className="px-5 py-2 rounded-xl text-[13px] cursor-pointer border-none bg-text-primary text-white hover:bg-text-secondary transition-colors"
             onClick={onClose}
           >
-            Close
+            Done
           </button>
         </div>
       </div>

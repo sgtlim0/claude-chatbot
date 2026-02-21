@@ -60,12 +60,11 @@ function MessageItemRaw({
 
   if (message.role === "user") {
     return (
-      <div className="flex flex-col items-end mb-4 animate-[fadeIn_0.2s_ease-out] group">
-        <div className="text-[11px] font-semibold text-text-muted mb-1 text-right">You</div>
+      <div className="flex flex-col items-end mb-5 animate-[fadeIn_0.15s_ease-out] group">
         {isEditing ? (
           <div className="w-full max-w-[85%]">
             <textarea
-              className="w-full p-3 border border-border rounded-xl bg-bg-input text-text-primary text-sm resize-none outline-none focus:border-accent"
+              className="w-full p-3 border border-border rounded-xl bg-bg-primary text-text-primary text-sm resize-none outline-none focus:border-accent"
               value={editText}
               onChange={(e) => setEditText(e.target.value)}
               onKeyDown={(e) => {
@@ -78,16 +77,16 @@ function MessageItemRaw({
               rows={3}
               autoFocus
             />
-            <div className="flex gap-2 mt-1 justify-end">
+            <div className="flex gap-2 mt-1.5 justify-end">
               <button
-                className="text-xs text-text-muted hover:text-text-primary px-2 py-1 rounded"
+                className="text-[12px] text-text-muted hover:text-text-primary px-2.5 py-1 rounded-md transition-colors"
                 onClick={() => setIsEditing(false)}
                 aria-label="Cancel editing"
               >
                 Cancel
               </button>
               <button
-                className="text-xs text-white bg-accent hover:bg-accent-hover px-3 py-1 rounded"
+                className="text-[12px] text-white bg-accent hover:bg-accent-hover px-3 py-1 rounded-md transition-colors"
                 onClick={handleEditSubmit}
                 aria-label="Save edit"
               >
@@ -96,48 +95,47 @@ function MessageItemRaw({
             </div>
           </div>
         ) : (
-          <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-br-sm bg-user-bubble text-white text-sm leading-relaxed break-words">
+          <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-br-md bg-user-bubble text-text-primary text-[14px] leading-relaxed break-words">
             {safeContent}
           </div>
         )}
         {!isStreaming && !isEditing && (
-          <div className="flex gap-1 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex gap-0.5 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
             <button
-              className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary hover:bg-bg-tertiary p-1 rounded"
+              className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary p-1 rounded-md transition-colors"
               onClick={handleCopy}
               aria-label={copied ? "Copied" : "Copy message"}
             >
               {copied ? <Check size={12} /> : <Copy size={12} />}
-              {copied ? "Copied" : "Copy"}
             </button>
             {onEdit && (
               <button
-                className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary hover:bg-bg-tertiary p-1 rounded"
+                className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary p-1 rounded-md transition-colors"
                 onClick={() => {
                   setEditText(message.content);
                   setIsEditing(true);
                 }}
                 aria-label="Edit message"
               >
-                <Pencil size={12} /> Edit
+                <Pencil size={12} />
               </button>
             )}
             {onRetry && (
               <button
-                className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary hover:bg-bg-tertiary p-1 rounded"
+                className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary p-1 rounded-md transition-colors"
                 onClick={() => onRetry(message.content)}
                 aria-label="Retry message"
               >
-                <RefreshCw size={12} /> Retry
+                <RefreshCw size={12} />
               </button>
             )}
             {onDelete && (
               <button
-                className="flex items-center gap-1 text-[11px] text-text-muted hover:text-danger hover:bg-danger/10 p-1 rounded"
+                className="flex items-center gap-1 text-[11px] text-text-muted hover:text-danger p-1 rounded-md transition-colors"
                 onClick={() => onDelete(message.id)}
                 aria-label="Delete message"
               >
-                <Trash2 size={12} /> Delete
+                <Trash2 size={12} />
               </button>
             )}
           </div>
@@ -148,38 +146,45 @@ function MessageItemRaw({
 
   if (message.role === "tool") {
     return (
-      <div className="mb-4 animate-[fadeIn_0.2s_ease-out]">
-        <div className="text-[11px] font-semibold text-text-muted mb-1 flex items-center gap-1">
-          <Wrench size={11} /> Tool
+      <div className="mb-5 animate-[fadeIn_0.15s_ease-out]">
+        <div className="flex items-center gap-1.5 mb-2">
+          <Wrench size={12} className="text-text-muted" />
+          <span className="text-[11px] font-medium text-text-muted">Tool Result</span>
         </div>
-        <div className="max-w-[85%] px-4 py-3 rounded-2xl rounded-bl-sm bg-emerald-50 border border-emerald-200 text-sm leading-relaxed break-words text-emerald-900">
+        <div className="max-w-[85%] px-4 py-3 rounded-xl bg-bg-secondary border border-border text-[13px] leading-relaxed break-words text-text-secondary">
           {safeContent}
         </div>
       </div>
     );
   }
 
-  // Assistant message - article style
+  // Assistant message
   return (
-    <div className="mb-6 animate-[fadeIn_0.2s_ease-out] group">
-      <div className="text-[11px] font-semibold text-text-muted mb-2 flex items-center gap-1">
-        AI
+    <div className="mb-6 animate-[fadeIn_0.15s_ease-out] group">
+      <div className="flex items-center gap-2 mb-3">
+        <div className="w-6 h-6 rounded-full bg-accent-light flex items-center justify-center flex-shrink-0">
+          <span className="text-accent text-[11px] font-semibold">C</span>
+        </div>
+        <span className="text-[13px] font-medium text-text-primary">Assistant</span>
         {hasSources && <SearchBadge />}
       </div>
 
       {hasSources && <SourceCards sources={message.sources!} />}
 
-      <div className="prose prose-sm max-w-none text-text-primary leading-relaxed
-        [&_p]:mb-2 [&_p:last-child]:mb-0
-        [&_ul]:my-1 [&_ul]:ml-5 [&_ol]:my-1 [&_ol]:ml-5
-        [&_table]:border-collapse [&_table]:my-2 [&_table]:w-full
-        [&_th]:border [&_th]:border-border [&_th]:px-2.5 [&_th]:py-1.5 [&_th]:text-[13px] [&_th]:bg-bg-tertiary
-        [&_td]:border [&_td]:border-border [&_td]:px-2.5 [&_td]:py-1.5 [&_td]:text-[13px]
-        [&_pre]:bg-gray-50 [&_pre]:p-3 [&_pre]:rounded-lg [&_pre]:overflow-x-auto [&_pre]:my-2 [&_pre]:border [&_pre]:border-border
+      <div className="prose prose-sm max-w-none text-text-primary leading-[1.7] text-[14px]
+        [&_p]:mb-3 [&_p:last-child]:mb-0
+        [&_ul]:my-2 [&_ul]:ml-5 [&_ol]:my-2 [&_ol]:ml-5 [&_li]:mb-1
+        [&_table]:border-collapse [&_table]:my-3 [&_table]:w-full
+        [&_th]:border [&_th]:border-border [&_th]:px-3 [&_th]:py-2 [&_th]:text-[13px] [&_th]:bg-bg-tertiary [&_th]:font-medium
+        [&_td]:border [&_td]:border-border [&_td]:px-3 [&_td]:py-2 [&_td]:text-[13px]
+        [&_pre]:bg-bg-secondary [&_pre]:p-4 [&_pre]:rounded-xl [&_pre]:overflow-x-auto [&_pre]:my-3 [&_pre]:border [&_pre]:border-border
         [&_code]:font-mono [&_code]:text-[13px]
-        [&_:not(pre)>code]:bg-bg-tertiary [&_:not(pre)>code]:px-1.5 [&_:not(pre)>code]:py-0.5 [&_:not(pre)>code]:rounded [&_:not(pre)>code]:text-xs
-        [&_blockquote]:border-l-3 [&_blockquote]:border-accent [&_blockquote]:my-2 [&_blockquote]:px-3 [&_blockquote]:text-text-secondary
+        [&_:not(pre)>code]:bg-bg-tertiary [&_:not(pre)>code]:px-1.5 [&_:not(pre)>code]:py-0.5 [&_:not(pre)>code]:rounded-md [&_:not(pre)>code]:text-[13px]
+        [&_blockquote]:border-l-2 [&_blockquote]:border-border [&_blockquote]:my-3 [&_blockquote]:px-4 [&_blockquote]:text-text-secondary [&_blockquote]:italic
         [&_a]:text-accent [&_a]:no-underline [&_a:hover]:underline
+        [&_h1]:text-lg [&_h1]:font-semibold [&_h1]:mt-5 [&_h1]:mb-2
+        [&_h2]:text-base [&_h2]:font-semibold [&_h2]:mt-4 [&_h2]:mb-2
+        [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:mt-3 [&_h3]:mb-1.5
       ">
         <ReactMarkdown
           remarkPlugins={[remarkGfm]}
@@ -188,7 +193,7 @@ function MessageItemRaw({
           {safeContent}
         </ReactMarkdown>
         {isStreaming && (
-          <span className="inline-block w-1.5 h-4 bg-accent ml-0.5 align-text-bottom animate-[blink_0.8s_infinite]" />
+          <span className="inline-block w-0.5 h-4 bg-accent ml-0.5 align-text-bottom animate-[blink_0.8s_infinite] rounded-full" />
         )}
       </div>
 
@@ -200,9 +205,9 @@ function MessageItemRaw({
       )}
 
       {!isStreaming && (
-        <div className="flex gap-1 mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+        <div className="flex gap-0.5 mt-2.5 opacity-0 group-hover:opacity-100 transition-opacity">
           <button
-            className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary hover:bg-bg-tertiary p-1 rounded"
+            className="flex items-center gap-1 text-[11px] text-text-muted hover:text-text-primary p-1 rounded-md transition-colors"
             onClick={handleCopy}
             aria-label={copied ? "Copied" : "Copy message"}
           >
@@ -211,11 +216,11 @@ function MessageItemRaw({
           </button>
           {onDelete && (
             <button
-              className="flex items-center gap-1 text-[11px] text-text-muted hover:text-danger hover:bg-danger/10 p-1 rounded"
+              className="flex items-center gap-1 text-[11px] text-text-muted hover:text-danger p-1 rounded-md transition-colors"
               onClick={() => onDelete(message.id)}
               aria-label="Delete message"
             >
-              <Trash2 size={12} /> Delete
+              <Trash2 size={12} />
             </button>
           )}
         </div>
