@@ -86,8 +86,9 @@ async function executeToolServer(name: string, argsJson: string): Promise<ToolRe
         return { text: `현재 시간: ${new Date().toISOString()}` };
 
       case "calculate": {
-        const { evaluate } = await import("mathjs");
-        const result = evaluate(args.expression);
+        const { Parser } = await import("expr-eval");
+        const parser = new Parser();
+        const result = parser.evaluate(args.expression);
         return { text: `계산 결과: ${args.expression} = ${result}` };
       }
 
