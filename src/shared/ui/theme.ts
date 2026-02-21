@@ -1,0 +1,31 @@
+export const theme = {
+  colors: {
+    bgPrimary: "#0f172a",
+    bgSecondary: "#1e293b",
+    bgTertiary: "#334155",
+    bgInput: "#1e293b",
+    textPrimary: "#f1f5f9",
+    textSecondary: "#94a3b8",
+    textMuted: "#64748b",
+    accent: "#3b82f6",
+    accentHover: "#2563eb",
+    userBubble: "#1d4ed8",
+    assistantBubble: "#1e293b",
+    border: "#334155",
+    danger: "#ef4444",
+    dangerHover: "#dc2626",
+    success: "#22c55e",
+    sidebarBg: "#111827",
+    sidebarActive: "#1e293b",
+    sidebarHover: "#1f2937",
+  },
+  radius: {
+    sm: "6px",
+    md: "10px",
+    lg: "16px",
+  },
+  shadow: {
+    sm: "0 1px 2px rgba(0,0,0,0.3)",
+    md: "0 4px 12px rgba(0,0,0,0.4)",
+  },
+} as const;

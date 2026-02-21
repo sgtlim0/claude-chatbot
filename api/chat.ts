@@ -9,6 +9,8 @@ interface ChatMessage {
 
 interface ChatRequest {
   messages: ChatMessage[];
+  model?: string;
+  systemPrompt?: string;
 }
 
 export default async function handler(req: Request): Promise<Response> {
@@ -17,7 +19,7 @@ export default async function handler(req: Request): Promise<Response> {
       return new Response("Method not allowed", { status: 405 });
     }
 
-    const { messages } = (await req.json()) as ChatRequest;
+    const { messages, model, systemPrompt } = (await req.json()) as ChatRequest;
 
     if (!messages?.length) {
       return new Response("messages required", { status: 400 });
@@ -37,11 +39,11 @@ export default async function handler(req: Request): Promise<Response> {
           Authorization: `Bearer ${apiKey}`,
         },
         body: JSON.stringify({
-          model: process.env.OPENAI_MODEL ?? DEFAULT_MODEL,
+          model: model || process.env.OPENAI_MODEL || DEFAULT_MODEL,
           max_tokens: 4096,
           stream: true,
           messages: [
-            { role: "system", content: "You are a helpful, friendly assistant. Answer concisely and clearly." },
+            { role: "system", content: systemPrompt || "You are a helpful, friendly assistant. Answer concisely and clearly." },
             ...messages,
           ],
         }),
