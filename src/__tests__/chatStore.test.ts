@@ -94,4 +94,36 @@ describe("chatStore", () => {
 
     expect(useChatStore.getState().sessions[id].title).toBe("My Custom Title");
   });
+
+  it("toggles pin on a session", () => {
+    const id = useChatStore.getState().createSession();
+    expect(useChatStore.getState().sessions[id].pinned).toBe(false);
+
+    useChatStore.getState().togglePin(id);
+    expect(useChatStore.getState().sessions[id].pinned).toBe(true);
+
+    useChatStore.getState().togglePin(id);
+    expect(useChatStore.getState().sessions[id].pinned).toBe(false);
+  });
+
+  it("deletes a message from active session", () => {
+    useChatStore.getState().createSession();
+    useChatStore.getState().addMessage({
+      id: "msg-1",
+      role: "user",
+      content: "Hello",
+      timestamp: Date.now(),
+    });
+    useChatStore.getState().addMessage({
+      id: "msg-2",
+      role: "assistant",
+      content: "Hi there",
+      timestamp: Date.now(),
+    });
+
+    useChatStore.getState().deleteMessage("msg-1");
+    const msgs = useChatStore.getState().getActiveMessages();
+    expect(msgs).toHaveLength(1);
+    expect(msgs[0].id).toBe("msg-2");
+  });
 });

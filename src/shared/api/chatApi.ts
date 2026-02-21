@@ -8,6 +8,7 @@ interface StreamChatParams {
   onError: (error: string) => void;
   onDone: () => void;
   signal?: AbortSignal;
+  tools?: boolean;
 }
 
 export async function streamChat({
@@ -18,11 +19,12 @@ export async function streamChat({
   onError,
   onDone,
   signal,
+  tools = true,
 }: StreamChatParams): Promise<void> {
   const res = await fetch("/api/chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages, model, systemPrompt }),
+    body: JSON.stringify({ messages, model, systemPrompt, tools }),
     signal,
   });
 

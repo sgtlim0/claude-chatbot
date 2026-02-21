@@ -2,50 +2,52 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Build & Run
+## Project Overview
+
+AI Chat Application — a React 19 SPA with real-time streaming chat powered by OpenAI's API. Features multi-session management, markdown rendering, message virtualization, tool calling (function calling), and conversation export.
+
+## Commands
 
 ```bash
-npm install          # Install dependencies
-npm run build        # Compile TypeScript (tsc -> dist/)
-npm start            # Run compiled app
-npm run dev          # Run with tsx (no build needed)
+npm run dev          # Start Vite dev server
+npm run build        # TypeScript check + Vite production build
+npm run test         # Run all tests (vitest)
+npm run test:watch   # Run tests in watch mode
 ```
 
-Type-check without emitting: `npx tsc --noEmit`
-
-## Project Structure
-
-TypeScript + Node.js CLI chatbot using the Anthropic SDK (`@anthropic-ai/sdk`).
-
-- `src/chat.ts` — `Chat` class: manages conversation history and streams Claude API responses
-- `src/index.ts` — CLI entry point: readline loop with `/quit` and `/reset` commands
-- Requires `ANTHROPIC_API_KEY` environment variable
-
-## Sub-Agent Routing Rules
-
-**Parallel execution** (when all conditions met):
-- 3+ independent tasks
-- No shared state between tasks
-- No overlapping file regions
-
-**Sequential execution** (when any applies):
-- Dependencies between tasks (B needs A's result)
-- Shared files/state (conflict risk)
-- Unclear scope
-
-**Background execution**:
-- Research/analysis tasks with no file modifications
-- Tasks that should not block current work
-
-## Agent Team Usage
-
-For explicit multi-agent delegation, prompt with role-based task decomposition. The lead agent breaks down work and assigns roles to sub-agents.
-
-Example:
+Deploy to Vercel:
+```bash
+npx vercel --token $VERCEL_TOKEN --yes         # Preview deploy
+npx vercel --prod --token $VERCEL_TOKEN --yes  # Production deploy
 ```
-Build a user authentication system. Split agents by role:
-1. Backend: Express.js login/signup/token refresh routes
-2. Frontend: React form components and validation
-3. Test: Integration test authoring
-4. Review: Full code security audit
-```
+
+## Architecture
+
+**FSD (Feature-Sliced Design)** with layers:
+
+- `src/app/` — Root component, global styles, entry point
+- `src/pages/chat/` — ChatPage layout (sidebar + main area)
+- `src/widgets/` — Composite UI components (ChatWindow, Sidebar, MessageInput, ModelSettings)
+- `src/features/` — Business logic (sendMessage, searchMessages, exportChat)
+- `src/entities/message/` — Domain types (Message, ChatSession, ToolCall)
+- `src/shared/` — Store (Zustand), API client, theme, utilities
+
+**State Management**: Zustand with `persist` middleware. Two stores:
+- `chatStore` — Sessions, messages, streaming state. Sessions stored as `Record<string, ChatSession>`.
+- `settingsStore` — Model selection, system prompt, temperature.
+
+**API Layer**: `api/chat.ts` is a Vercel Edge Runtime serverless function. It proxies to OpenAI's REST API directly (no SDK — Edge runtime incompatible). Supports SSE streaming and server-side tool execution with agent loop.
+
+**Styling**: Emotion CSS-in-JS (`@emotion/styled`). Requires `/** @jsxImportSource @emotion/react */` pragma at top of every component file using `css` prop or styled components.
+
+## Key Patterns
+
+- Path alias: `@/` maps to `src/` (configured in both `vite.config.ts` and `tsconfig.app.json`)
+- Messages are streamed via SSE: API sends `data: "chunk"\n\n` format, client parses in `streamChat()`
+- `sendMessage()` is a standalone function (not a hook) that imperatively calls `useChatStore.getState()`
+- Virtualizer: ChatWindow uses `@tanstack/react-virtual` for large message lists
+- MessageItem is `memo()`-wrapped and renders Markdown via `react-markdown` + `remark-gfm` + `rehype-highlight`
+
+## Testing
+
+Tests use Vitest with jsdom environment. Path aliases work via `vitest.config.ts`. Store tests reset state in `beforeEach` using `useChatStore.setState()`.

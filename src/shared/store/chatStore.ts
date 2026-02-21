@@ -13,8 +13,10 @@ interface ChatState {
   switchSession: (id: string) => void;
   deleteSession: (id: string) => void;
   renameSession: (id: string, title: string) => void;
+  togglePin: (id: string) => void;
 
   addMessage: (msg: Message) => void;
+  deleteMessage: (msgId: string) => void;
   appendToLastMessage: (chunk: string) => void;
   finishStreaming: () => void;
   setStreaming: (value: boolean) => void;
@@ -39,6 +41,7 @@ export const useChatStore = create<ChatState>()(
           title: "New Chat",
           messages: [],
           createdAt: Date.now(),
+          pinned: false,
         };
         set((state) => ({
           sessions: { ...state.sessions, [id]: session },
@@ -74,6 +77,18 @@ export const useChatStore = create<ChatState>()(
           };
         }),
 
+      togglePin: (id) =>
+        set((state) => {
+          const session = state.sessions[id];
+          if (!session) return state;
+          return {
+            sessions: {
+              ...state.sessions,
+              [id]: { ...session, pinned: !session.pinned },
+            },
+          };
+        }),
+
       addMessage: (msg) => {
         const { activeSessionId } = get();
         if (!activeSessionId) return;
@@ -93,6 +108,25 @@ export const useChatStore = create<ChatState>()(
 
           return {
             sessions: { ...state.sessions, [activeSessionId]: updatedSession },
+          };
+        });
+      },
+
+      deleteMessage: (msgId) => {
+        const { activeSessionId } = get();
+        if (!activeSessionId) return;
+
+        set((state) => {
+          const session = state.sessions[activeSessionId];
+          if (!session) return state;
+          return {
+            sessions: {
+              ...state.sessions,
+              [activeSessionId]: {
+                ...session,
+                messages: session.messages.filter((m) => m.id !== msgId),
+              },
+            },
           };
         });
       },

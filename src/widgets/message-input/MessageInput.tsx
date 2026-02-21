@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import { sendMessage, abortCurrentStream } from "@/features/send-message/sendMessage";
 import { useChatStore } from "@/shared/store/chatStore";
 import { theme } from "@/shared/ui/theme";
+import { Send, Square } from "lucide-react";
 
 const Container = styled.div`
   padding: 16px 24px 24px;
@@ -41,15 +42,15 @@ const TextArea = styled.textarea`
 `;
 
 const SendBtn = styled.button<{ streaming?: boolean }>`
-  padding: 12px 20px;
+  padding: 12px;
   background: ${(p) => (p.streaming ? theme.colors.danger : theme.colors.accent)};
   color: white;
   border: none;
   border-radius: ${theme.radius.lg};
-  font-size: 14px;
-  font-weight: 500;
   cursor: pointer;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   &:hover {
     background: ${(p) =>
       p.streaming ? theme.colors.dangerHover : theme.colors.accentHover};
@@ -111,10 +112,9 @@ export function MessageInput() {
           onChange={(e) => setText(e.target.value)}
           onKeyDown={handleKeyDown}
           onInput={handleInput}
-          disabled={false}
         />
         <SendBtn onClick={handleSend} streaming={isStreaming}>
-          {isStreaming ? "Stop" : "Send"}
+          {isStreaming ? <Square size={18} /> : <Send size={18} />}
         </SendBtn>
       </Inner>
     </Container>

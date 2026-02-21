@@ -5,6 +5,7 @@ import { theme } from "@/shared/ui/theme";
 import { ConversationList } from "./ConversationList";
 import { SearchPanel } from "./SearchPanel";
 import { useState } from "react";
+import { Plus, Search } from "lucide-react";
 
 const Container = styled.aside<{ collapsed: boolean }>`
   width: ${(p) => (p.collapsed ? "0" : "280px")};
@@ -33,16 +34,33 @@ const NewChatBtn = styled.button`
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
   &:hover {
     background: ${theme.colors.accentHover};
   }
 `;
 
+const SearchWrapper = styled.div`
+  position: relative;
+  margin: 0 16px 12px;
+`;
+
+const SearchIcon = styled.span`
+  position: absolute;
+  left: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: ${theme.colors.textMuted};
+  display: flex;
+  align-items: center;
+`;
+
 const SearchInput = styled.input`
   width: 100%;
-  padding: 10px 14px;
-  margin: 0 16px 12px;
-  width: calc(100% - 32px);
+  padding: 10px 14px 10px 34px;
   background: ${theme.colors.bgTertiary};
   border: 1px solid ${theme.colors.border};
   border-radius: ${theme.radius.md};
@@ -68,20 +86,32 @@ export function Sidebar({ collapsed }: SidebarProps) {
   return (
     <Container collapsed={collapsed}>
       <Header>
-        <NewChatBtn onClick={() => createSession()}>+ New Chat</NewChatBtn>
+        <NewChatBtn onClick={() => createSession()}>
+          <Plus size={16} /> New Chat
+        </NewChatBtn>
       </Header>
 
-      <SearchInput
-        placeholder="Search messages..."
-        value={searchQuery}
-        onChange={(e) => {
-          setSearchQuery(e.target.value);
-          setShowSearch(e.target.value.length > 0);
-        }}
-      />
+      <SearchWrapper>
+        <SearchIcon>
+          <Search size={14} />
+        </SearchIcon>
+        <SearchInput
+          placeholder="Search messages..."
+          value={searchQuery}
+          onChange={(e) => {
+            setSearchQuery(e.target.value);
+            setShowSearch(e.target.value.length > 0);
+          }}
+        />
+      </SearchWrapper>
 
       {showSearch && searchQuery ? (
-        <SearchPanel onClose={() => { setShowSearch(false); setSearchQuery(""); }} />
+        <SearchPanel
+          onClose={() => {
+            setShowSearch(false);
+            setSearchQuery("");
+          }}
+        />
       ) : (
         <ConversationList />
       )}

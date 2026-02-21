@@ -6,7 +6,21 @@ import { ChatWindow } from "@/widgets/chat-window/ChatWindow";
 import { MessageInput } from "@/widgets/message-input/MessageInput";
 import { ModelSettings } from "@/widgets/model-settings/ModelSettings";
 import { useSettingsStore } from "@/shared/store/settingsStore";
+import { useChatStore } from "@/shared/store/chatStore";
+import {
+  exportSessionMarkdown,
+  exportSessionJson,
+  exportAllSessionsJson,
+} from "@/features/export-chat/exportChat";
 import { theme } from "@/shared/ui/theme";
+import {
+  PanelLeftOpen,
+  PanelLeftClose,
+  Settings,
+  Download,
+  FileText,
+  FileJson,
+} from "lucide-react";
 
 const Layout = styled.div`
   display: flex;
@@ -37,14 +51,23 @@ const TopBarLeft = styled.div`
   gap: 12px;
 `;
 
-const ToggleBtn = styled.button`
+const TopBarRight = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const IconBtn = styled.button`
   background: none;
   border: none;
   color: ${theme.colors.textSecondary};
-  font-size: 20px;
   cursor: pointer;
-  padding: 4px 8px;
+  padding: 6px;
   border-radius: ${theme.radius.sm};
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
   &:hover {
     background: ${theme.colors.bgTertiary};
     color: ${theme.colors.textPrimary};
@@ -59,24 +82,48 @@ const ModelBadge = styled.span`
   color: ${theme.colors.textSecondary};
 `;
 
-const SettingsBtn = styled.button`
-  background: none;
+const DropdownWrapper = styled.div`
+  position: relative;
+`;
+
+const Dropdown = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 4px;
+  background: ${theme.colors.bgSecondary};
   border: 1px solid ${theme.colors.border};
-  color: ${theme.colors.textSecondary};
-  padding: 6px 14px;
   border-radius: ${theme.radius.md};
+  padding: 4px;
+  min-width: 160px;
+  z-index: 50;
+  box-shadow: ${theme.shadow.md};
+`;
+
+const DropdownItem = styled.button`
+  width: 100%;
+  background: none;
+  border: none;
+  color: ${theme.colors.textPrimary};
+  padding: 8px 12px;
   font-size: 13px;
   cursor: pointer;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
   &:hover {
-    border-color: ${theme.colors.accent};
-    color: ${theme.colors.accent};
+    background: ${theme.colors.bgTertiary};
   }
 `;
 
 export function ChatPage() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [showExport, setShowExport] = useState(false);
   const model = useSettingsStore((s) => s.model);
+  const { sessions, activeSessionId } = useChatStore();
+  const activeSession = activeSessionId ? sessions[activeSessionId] : null;
 
   return (
     <Layout>
@@ -84,14 +131,53 @@ export function ChatPage() {
       <Main>
         <TopBar>
           <TopBarLeft>
-            <ToggleBtn onClick={() => setSidebarCollapsed((v) => !v)}>
-              {sidebarCollapsed ? "☰" : "✕"}
-            </ToggleBtn>
+            <IconBtn onClick={() => setSidebarCollapsed((v) => !v)}>
+              {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            </IconBtn>
             <ModelBadge>{model}</ModelBadge>
           </TopBarLeft>
-          <SettingsBtn onClick={() => setShowSettings(true)}>
-            Settings
-          </SettingsBtn>
+          <TopBarRight>
+            <DropdownWrapper>
+              <IconBtn onClick={() => setShowExport((v) => !v)}>
+                <Download size={16} /> Export
+              </IconBtn>
+              {showExport && (
+                <Dropdown>
+                  {activeSession && (
+                    <>
+                      <DropdownItem
+                        onClick={() => {
+                          exportSessionMarkdown(activeSession);
+                          setShowExport(false);
+                        }}
+                      >
+                        <FileText size={14} /> Export as Markdown
+                      </DropdownItem>
+                      <DropdownItem
+                        onClick={() => {
+                          exportSessionJson(activeSession);
+                          setShowExport(false);
+                        }}
+                      >
+                        <FileJson size={14} /> Export as JSON
+                      </DropdownItem>
+                    </>
+                  )}
+                  <DropdownItem
+                    onClick={() => {
+                      exportAllSessionsJson(sessions);
+                      setShowExport(false);
+                    }}
+                  >
+                    <Download size={14} /> Export All (JSON)
+                  </DropdownItem>
+                </Dropdown>
+              )}
+            </DropdownWrapper>
+            <IconBtn onClick={() => setShowSettings(true)}>
+              <Settings size={16} /> Settings
+            </IconBtn>
+          </TopBarRight>
         </TopBar>
         <ChatWindow />
         <MessageInput />
