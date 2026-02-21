@@ -1,6 +1,6 @@
 import OpenAI from "openai";
 
-export const config = { runtime: "edge", maxDuration: 60 };
+export const config = { maxDuration: 60 };
 
 const DEFAULT_MODEL = "gpt-4o";
 
