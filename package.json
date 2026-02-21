@@ -1,17 +1,19 @@
 {
-  "name": "gemini-chatbot",
+  "name": "chatgpt-chatbot",
   "version": "1.0.0",
-  "description": "Multi-turn conversational chatbot using Gemini API",
+  "description": "Multi-turn conversational chatbot using ChatGPT (OpenAI API)",
   "type": "module",
   "scripts": {
     "build": "tsc",
     "start": "node dist/index.js",
     "dev": "tsx src/index.ts"
   },
-  "dependencies": {},
   "devDependencies": {
     "@types/node": "^22.0.0",
     "tsx": "^4.19.0",
     "typescript": "^5.7.0"
+  },
+  "dependencies": {
+    "openai": "^6.22.0"
   }
 }
