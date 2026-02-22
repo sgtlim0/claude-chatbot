@@ -1,0 +1,39 @@
+[project]
+name = "cardnews-ai-chat-backend"
+version = "0.1.0"
+description = "FastAPI + LangChain + MongoDB backend for CardNews AI Chat"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]>=0.115.0",
+    "langchain-aws>=0.2.0",
+    "langchain-core>=0.3.0",
+    "beanie>=1.26.0",
+    "motor>=3.6.0",
+    "pydantic-settings>=2.0.0",
+    "uvicorn>=0.30.0",
+]
+
+[project.optional-dependencies]
+eval = [
+    "pyyaml>=6.0",
+]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "black>=24.0.0",
+    "ruff>=0.5.0",
+    "pyyaml>=6.0",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+select = ["E", "F", "I"]

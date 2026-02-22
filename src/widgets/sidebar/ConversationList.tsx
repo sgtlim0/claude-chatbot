@@ -1,115 +1,112 @@
-import { useChatStore } from "@/shared/store/chatStore";
-import { Pin, PinOff, Trash2 } from "lucide-react";
-import { isToday, isYesterday, isThisWeek, isThisMonth, format } from "date-fns";
-import type { ChatSession } from "@/entities/message/model";
+'use client'
 
-function getDateGroup(timestamp: number): string {
-  const date = new Date(timestamp);
-  if (isToday(date)) return "오늘";
-  if (isYesterday(date)) return "어제";
-  if (isThisWeek(date)) return "이번 주";
-  if (isThisMonth(date)) return "이번 달";
-  return format(date, "yyyy년 M월");
+import React from 'react'
+import { MessageSquare, Pin, Trash2 } from 'lucide-react'
+import { formatDistanceToNow } from 'date-fns'
+import { useChatStore } from '@/shared/store/chatStore'
+import { useSettingsStore, AVAILABLE_MODELS } from '@/shared/store/settingsStore'
+import { Highlight } from '@/features/search/Highlight'
+
+interface ConversationListProps {
+  searchQuery: string
 }
 
-function groupSessions(sessions: ChatSession[]): { label: string; items: ChatSession[] }[] {
-  const pinned = sessions.filter((s) => s.pinned);
-  const unpinned = sessions.filter((s) => !s.pinned);
+export function ConversationList({ searchQuery }: ConversationListProps) {
+  const { sessions, activeSessionId, switchSession, deleteSession, togglePin } = useChatStore()
 
-  const groups: { label: string; items: ChatSession[] }[] = [];
+  const sortedSessions = Object.values(sessions)
+    .filter((session) => {
+      if (!searchQuery.trim()) return true
+      const q = searchQuery.toLowerCase()
+      return (
+        session.title.toLowerCase().includes(q) ||
+        session.messages.some((m) => m.content.toLowerCase().includes(q))
+      )
+    })
+    .sort((a, b) => {
+      if (a.pinned !== b.pinned) return a.pinned ? -1 : 1
+      return b.updatedAt - a.updatedAt
+    })
 
-  if (pinned.length > 0) {
-    groups.push({ label: "고정됨", items: pinned.sort((a, b) => b.createdAt - a.createdAt) });
+  const handleDelete = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    if (confirm('Delete this conversation?')) {
+      deleteSession(id)
+    }
   }
 
-  const dateGroups: Record<string, ChatSession[]> = {};
-  for (const s of unpinned.sort((a, b) => b.createdAt - a.createdAt)) {
-    const group = getDateGroup(s.createdAt);
-    if (!dateGroups[group]) dateGroups[group] = [];
-    dateGroups[group].push(s);
+  const handlePin = (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    togglePin(id)
   }
 
-  for (const [label, items] of Object.entries(dateGroups)) {
-    groups.push({ label, items });
-  }
-
-  return groups;
-}
-
-export function ConversationList() {
-  const { sessions, activeSessionId, switchSession, deleteSession, togglePin } =
-    useChatStore();
-
-  const allSessions = Object.values(sessions);
-
-  if (allSessions.length === 0) {
+  if (sortedSessions.length === 0) {
     return (
-      <div className="flex-1 overflow-y-auto px-3" role="list">
-        <div className="py-8 text-center text-text-muted text-[13px]">
-          아직 대화가 없습니다
-        </div>
+      <div className="px-4 py-8 text-center">
+        <p className="text-sm text-text-muted">
+          {searchQuery ? 'No results found' : 'No conversations yet'}
+        </p>
       </div>
-    );
+    )
   }
-
-  const groups = groupSessions(allSessions);
 
   return (
-    <div className="flex-1 overflow-y-auto px-1.5" role="list">
-      {groups.map((group) => (
-        <div key={group.label}>
-          <div className="text-[11px] font-medium text-text-muted px-3 pt-3 pb-1 tracking-wide">
-            {group.label}
-          </div>
-          {group.items.map((session) => (
-            <div
-              key={session.id}
-              role="listitem"
-              className={`flex items-center justify-between px-3 py-2 mx-1.5 mb-px rounded-lg cursor-pointer group/item transition-colors ${
-                session.id === activeSessionId
-                  ? "bg-sidebar-active"
-                  : "hover:bg-sidebar-hover"
-              }`}
-              onClick={() => switchSession(session.id)}
-            >
-              <div className="flex items-center flex-1 min-w-0">
-                {session.pinned && (
-                  <span className="text-accent mr-1.5 flex items-center">
-                    <Pin size={11} />
-                  </span>
-                )}
-                <span className="text-[13px] text-text-primary overflow-hidden text-ellipsis whitespace-nowrap">
-                  {session.title}
+    <div className="px-2 py-1">
+      {sortedSessions.map((session) => {
+        const isActive = session.id === activeSessionId
+        const relativeTime = formatDistanceToNow(new Date(session.updatedAt), { addSuffix: true })
+
+        return (
+          <button
+            key={session.id}
+            onClick={() => switchSession(session.id)}
+            className={`w-full flex items-start gap-2.5 px-2.5 py-2.5 rounded-lg transition-colors text-left group mb-0.5 border-none cursor-pointer ${
+              isActive
+                ? 'bg-sidebar-active border-l-2 border-l-accent'
+                : 'bg-transparent hover:bg-sidebar-hover'
+            }`}
+          >
+            {session.pinned && (
+              <Pin className="w-3 h-3 text-accent fill-current flex-shrink-0 mt-1" />
+            )}
+            {!session.pinned && (
+              <MessageSquare className="w-4 h-4 text-text-muted flex-shrink-0 mt-0.5" />
+            )}
+
+            <div className="flex-1 min-w-0">
+              <div className={`text-[13px] truncate ${isActive ? 'text-accent font-medium' : 'text-text-primary'}`}>
+                <Highlight text={session.title} query={searchQuery} />
+              </div>
+              <div className="flex items-center gap-2 mt-0.5">
+                <span className="text-[11px] text-text-muted">
+                  {session.messages.length} msgs
+                </span>
+                <span className="text-[11px] text-text-muted">
+                  {relativeTime}
                 </span>
               </div>
-              <div className="flex gap-0.5 opacity-0 group-hover/item:opacity-100 transition-opacity">
-                <button
-                  className="bg-transparent border-none text-text-muted cursor-pointer p-1 rounded flex items-center hover:text-text-primary hover:bg-black/5"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    togglePin(session.id);
-                  }}
-                  title={session.pinned ? "Unpin" : "Pin"}
-                  aria-label={session.pinned ? "Unpin conversation" : "Pin conversation"}
-                >
-                  {session.pinned ? <PinOff size={12} /> : <Pin size={12} />}
-                </button>
-                <button
-                  className="bg-transparent border-none text-text-muted cursor-pointer p-1 rounded flex items-center hover:text-danger hover:bg-danger/10"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    deleteSession(session.id);
-                  }}
-                  title="Delete"
-                  aria-label="Delete conversation"
-                >
-                  <Trash2 size={12} />
-                </button>
-              </div>
             </div>
-          ))}
-        </div>
-      ))}
+
+            {/* Hover actions */}
+            <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+              <button
+                onClick={(e) => handlePin(e, session.id)}
+                className="p-1 rounded hover:bg-bg-tertiary bg-transparent border-none cursor-pointer"
+                aria-label={session.pinned ? 'Unpin' : 'Pin'}
+              >
+                <Pin className={`w-3 h-3 ${session.pinned ? 'text-accent' : 'text-text-muted'}`} />
+              </button>
+              <button
+                onClick={(e) => handleDelete(e, session.id)}
+                className="p-1 rounded hover:bg-bg-tertiary bg-transparent border-none cursor-pointer"
+                aria-label="Delete"
+              >
+                <Trash2 className="w-3 h-3 text-text-muted hover:text-danger" />
+              </button>
+            </div>
+          </button>
+        )
+      })}
     </div>
-  );
+  )
 }

@@ -1,21 +1,21 @@
-import type { Message } from "@/entities/message/model";
-
-const MODAL_API_URL =
-  import.meta.env.VITE_API_URL ||
-  "https://sgtlim0--cardnews-ai-chat-api-web-app.modal.run/chat";
+import { ApiError } from '../lib/errors'
 
 interface StreamChatParams {
-  messages: Pick<Message, "role" | "content">[];
-  model: string;
-  systemPrompt: string;
-  onChunk: (chunk: string) => void;
-  onError: (error: string) => void;
-  onDone: () => void;
-  signal?: AbortSignal;
+  sessionId: string
+  browserId: string
+  message: string
+  model: string
+  systemPrompt?: string
+  onChunk: (content: string) => void
+  onError: (error: Error) => void
+  onDone: () => void
+  signal?: AbortSignal
 }
 
 export async function streamChat({
-  messages,
+  sessionId,
+  browserId,
+  message,
   model,
   systemPrompt,
   onChunk,
@@ -23,53 +23,65 @@ export async function streamChat({
   onDone,
   signal,
 }: StreamChatParams): Promise<void> {
-  const apiMessages = messages
-    .filter((m) => m.role === "user" || m.role === "assistant")
-    .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
-
   try {
-    const res = await fetch(MODAL_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages: apiMessages, model, systemPrompt }),
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        session_id: sessionId,
+        browser_id: browserId,
+        message,
+        model,
+        system_prompt: systemPrompt,
+      }),
       signal,
-    });
+    })
 
-    if (!res.ok) {
-      const text = await res.text();
-      onError(`API 오류 (${res.status}): ${text}`);
-      onDone();
-      return;
+    if (!response.ok) {
+      throw new ApiError(`Chat request failed: ${response.statusText}`, response.status)
     }
 
-    const data = await res.json();
+    const reader = response.body!.getReader()
+    const decoder = new TextDecoder()
+    let buffer = ''
 
-    if (data.error) {
-      onError(data.error);
-      onDone();
-      return;
-    }
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
 
-    const text = data.response || "";
-    if (!text) {
-      onError("응답이 비어있습니다");
-      onDone();
-      return;
-    }
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
 
-    const words = text.split(/(\s+)/);
-    for (const word of words) {
-      if (signal?.aborted) break;
-      if (word) {
-        onChunk(word);
-        await new Promise((r) => setTimeout(r, 15));
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          const data = line.slice(6)
+
+          if (data === '[DONE]') {
+            onDone()
+            return
+          }
+
+          try {
+            const parsed = JSON.parse(data)
+            if (parsed.content) {
+              onChunk(parsed.content)
+            }
+          } catch (e) {
+            console.error('Failed to parse SSE data:', e)
+          }
+        }
       }
     }
-  } catch (err) {
-    if ((err as Error).name !== "AbortError") {
-      onError((err as Error).message);
+
+    onDone()
+  } catch (error) {
+    if (error instanceof Error) {
+      onError(error)
+    } else {
+      onError(new Error('Unknown error occurred'))
     }
   }
-
-  onDone();
 }

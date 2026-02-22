@@ -1,255 +1,284 @@
-import { create } from "zustand";
-import { persist } from "zustand/middleware";
-import type { Message, ChatSession, Source, RelatedQuestion } from "@/entities/message/model";
-import { generateId } from "@/shared/lib/generateId";
+import { create } from 'zustand'
+import { ChatSession, Message, TestResult } from '@/entities/message'
+import { generateId } from '../lib/generateId'
+import { getBrowserId } from '../lib/browserId'
+import { migrateLocalStorage } from '../lib/migrateLocalStorage'
+import * as sessionApi from '../api/sessionApi'
 
-interface ChatState {
-  sessions: Record<string, ChatSession>;
-  activeSessionId: string | null;
-  isStreaming: boolean;
-  searchQuery: string;
+type RightPanel = null | 'settings' | 'test'
 
-  createSession: () => string;
-  switchSession: (id: string) => void;
-  deleteSession: (id: string) => void;
-  renameSession: (id: string, title: string) => void;
-  togglePin: (id: string) => void;
+interface ChatStore {
+  // State
+  sessions: Record<string, ChatSession>
+  activeSessionId: string | null
+  isStreaming: boolean
+  searchQuery: string
+  browserId: string
+  rightPanel: RightPanel
+  testResults: TestResult[]
 
-  addMessage: (msg: Message) => void;
-  deleteMessage: (msgId: string) => void;
-  appendToLastMessage: (chunk: string) => void;
-  finishStreaming: () => void;
-  setStreaming: (value: boolean) => void;
-  setSearchQuery: (query: string) => void;
-
-  setMessageSources: (msgId: string, sources: Source[]) => void;
-  setMessageRelatedQuestions: (msgId: string, questions: RelatedQuestion[]) => void;
-  editMessage: (msgId: string, newContent: string) => void;
-
-  getActiveMessages: () => Message[];
-  clearActiveSession: () => void;
+  // Actions
+  initStore: () => Promise<void>
+  createSession: () => Promise<void>
+  switchSession: (id: string) => Promise<void>
+  deleteSession: (id: string) => Promise<void>
+  renameSession: (id: string, title: string) => Promise<void>
+  togglePin: (id: string) => Promise<void>
+  addMessage: (sessionId: string, message: Message) => void
+  appendToLastMessage: (sessionId: string, content: string) => void
+  finishStreaming: () => void
+  setStreaming: (isStreaming: boolean) => void
+  setSearchQuery: (query: string) => void
+  updateLastMessage: (sessionId: string, content: string) => void
+  deleteMessage: (sessionId: string, messageId: string) => void
+  setRightPanel: (panel: RightPanel) => void
+  addTestResult: (result: TestResult) => void
+  clearTestResults: () => void
 }
 
-export const useChatStore = create<ChatState>()(
-  persist(
-    (set, get) => ({
-      sessions: {},
-      activeSessionId: null,
-      isStreaming: false,
-      searchQuery: "",
+export const useChatStore = create<ChatStore>((set, get) => ({
+  sessions: {},
+  activeSessionId: null,
+  isStreaming: false,
+  searchQuery: '',
+  browserId: '',
+  rightPanel: null,
+  testResults: [],
 
-      createSession: () => {
-        const id = generateId();
-        const session: ChatSession = {
-          id,
-          title: "새 채팅",
-          messages: [],
-          createdAt: Date.now(),
-          pinned: false,
-        };
-        set((state) => ({
-          sessions: { ...state.sessions, [id]: session },
-          activeSessionId: id,
-        }));
-        return id;
-      },
+  initStore: async () => {
+    const browserId = getBrowserId()
+    set({ browserId })
 
-      switchSession: (id) => set({ activeSessionId: id }),
+    // Migrate old localStorage data if exists
+    await migrateLocalStorage(browserId)
 
-      deleteSession: (id) =>
-        set((state) => {
-          const { [id]: _, ...rest } = state.sessions;
-          const keys = Object.keys(rest);
-          return {
-            sessions: rest,
-            activeSessionId:
-              state.activeSessionId === id
-                ? keys[0] ?? null
-                : state.activeSessionId,
-          };
-        }),
+    try {
+      const sessions = await sessionApi.fetchSessions(browserId)
+      const sessionsMap = sessions.reduce((acc, session) => {
+        acc[session.id] = session
+        return acc
+      }, {} as Record<string, ChatSession>)
 
-      renameSession: (id, title) =>
-        set((state) => {
-          const session = state.sessions[id];
-          if (!session) return state;
-          return {
-            sessions: {
-              ...state.sessions,
-              [id]: { ...session, title },
-            },
-          };
-        }),
+      set({ sessions: sessionsMap })
 
-      togglePin: (id) =>
-        set((state) => {
-          const session = state.sessions[id];
-          if (!session) return state;
-          return {
-            sessions: {
-              ...state.sessions,
-              [id]: { ...session, pinned: !session.pinned },
-            },
-          };
-        }),
-
-      addMessage: (msg) => {
-        const { activeSessionId } = get();
-        if (!activeSessionId) return;
-
-        set((state) => {
-          const session = state.sessions[activeSessionId];
-          if (!session) return state;
-
-          const updatedSession = {
-            ...session,
-            messages: [...session.messages, msg],
-            title:
-              session.messages.length === 0 && msg.role === "user"
-                ? msg.content.slice(0, 30) + (msg.content.length > 30 ? "..." : "")
-                : session.title,
-          };
-
-          return {
-            sessions: { ...state.sessions, [activeSessionId]: updatedSession },
-          };
-        });
-      },
-
-      deleteMessage: (msgId) => {
-        const { activeSessionId } = get();
-        if (!activeSessionId) return;
-
-        set((state) => {
-          const session = state.sessions[activeSessionId];
-          if (!session) return state;
-          return {
-            sessions: {
-              ...state.sessions,
-              [activeSessionId]: {
-                ...session,
-                messages: session.messages.filter((m) => m.id !== msgId),
-              },
-            },
-          };
-        });
-      },
-
-      appendToLastMessage: (chunk) => {
-        const { activeSessionId } = get();
-        if (!activeSessionId) return;
-
-        set((state) => {
-          const session = state.sessions[activeSessionId];
-          if (!session || session.messages.length === 0) return state;
-
-          const msgs = [...session.messages];
-          const last = { ...msgs[msgs.length - 1] };
-          last.content += chunk;
-          msgs[msgs.length - 1] = last;
-
-          return {
-            sessions: {
-              ...state.sessions,
-              [activeSessionId]: { ...session, messages: msgs },
-            },
-          };
-        });
-      },
-
-      finishStreaming: () => set({ isStreaming: false }),
-
-      setStreaming: (value) => set({ isStreaming: value }),
-
-      setSearchQuery: (query) => set({ searchQuery: query }),
-
-      setMessageSources: (msgId, sources) => {
-        const { activeSessionId } = get();
-        if (!activeSessionId) return;
-        set((state) => {
-          const session = state.sessions[activeSessionId];
-          if (!session) return state;
-          return {
-            sessions: {
-              ...state.sessions,
-              [activeSessionId]: {
-                ...session,
-                messages: session.messages.map((m) =>
-                  m.id === msgId ? { ...m, sources } : m
-                ),
-              },
-            },
-          };
-        });
-      },
-
-      setMessageRelatedQuestions: (msgId, questions) => {
-        const { activeSessionId } = get();
-        if (!activeSessionId) return;
-        set((state) => {
-          const session = state.sessions[activeSessionId];
-          if (!session) return state;
-          return {
-            sessions: {
-              ...state.sessions,
-              [activeSessionId]: {
-                ...session,
-                messages: session.messages.map((m) =>
-                  m.id === msgId ? { ...m, relatedQuestions: questions } : m
-                ),
-              },
-            },
-          };
-        });
-      },
-
-      editMessage: (msgId, newContent) => {
-        const { activeSessionId } = get();
-        if (!activeSessionId) return;
-        set((state) => {
-          const session = state.sessions[activeSessionId];
-          if (!session) return state;
-          const msgIndex = session.messages.findIndex((m) => m.id === msgId);
-          if (msgIndex === -1) return state;
-          const updatedMessages = session.messages
-            .slice(0, msgIndex + 1)
-            .map((m) => (m.id === msgId ? { ...m, content: newContent } : m));
-          return {
-            sessions: {
-              ...state.sessions,
-              [activeSessionId]: { ...session, messages: updatedMessages },
-            },
-          };
-        });
-      },
-
-      getActiveMessages: () => {
-        const { activeSessionId, sessions } = get();
-        if (!activeSessionId) return [];
-        return sessions[activeSessionId]?.messages ?? [];
-      },
-
-      clearActiveSession: () => {
-        const { activeSessionId } = get();
-        if (!activeSessionId) return;
-        set((state) => {
-          const session = state.sessions[activeSessionId];
-          if (!session) return state;
-          return {
-            sessions: {
-              ...state.sessions,
-              [activeSessionId]: { ...session, messages: [], title: "새 채팅" },
-            },
-          };
-        });
-      },
-    }),
-    {
-      name: "ai-chat-sessions",
-      partialize: (state) => ({
-        sessions: state.sessions,
-        activeSessionId: state.activeSessionId,
-      }),
+      // Set first session as active if exists
+      if (sessions.length > 0) {
+        set({ activeSessionId: sessions[0].id })
+      }
+    } catch (error) {
+      console.error('Failed to initialize store:', error)
     }
-  )
-);
+  },
+
+  createSession: async () => {
+    const { browserId } = get()
+
+    try {
+      const newSession = await sessionApi.createSession(browserId)
+
+      set((state) => ({
+        sessions: {
+          ...state.sessions,
+          [newSession.id]: newSession,
+        },
+        activeSessionId: newSession.id,
+      }))
+    } catch (error) {
+      console.error('Failed to create session:', error)
+    }
+  },
+
+  switchSession: async (id: string) => {
+    const { sessions } = get()
+
+    // If we don't have messages loaded, fetch them
+    if (!sessions[id]?.messages || sessions[id].messages.length === 0) {
+      try {
+        const session = await sessionApi.fetchSession(id)
+        set((state) => ({
+          sessions: {
+            ...state.sessions,
+            [id]: session,
+          },
+          activeSessionId: id,
+        }))
+      } catch (error) {
+        console.error('Failed to fetch session:', error)
+        set({ activeSessionId: id })
+      }
+    } else {
+      set({ activeSessionId: id })
+    }
+  },
+
+  deleteSession: async (id: string) => {
+    try {
+      await sessionApi.deleteSession(id)
+
+      set((state) => {
+        const { [id]: deleted, ...remainingSessions } = state.sessions
+        const sessionIds = Object.keys(remainingSessions)
+        const newActiveId = state.activeSessionId === id
+          ? (sessionIds.length > 0 ? sessionIds[0] : null)
+          : state.activeSessionId
+
+        return {
+          sessions: remainingSessions,
+          activeSessionId: newActiveId,
+        }
+      })
+    } catch (error) {
+      console.error('Failed to delete session:', error)
+    }
+  },
+
+  renameSession: async (id: string, title: string) => {
+    try {
+      const updatedSession = await sessionApi.updateSession(id, { title })
+
+      set((state) => ({
+        sessions: {
+          ...state.sessions,
+          [id]: updatedSession,
+        },
+      }))
+    } catch (error) {
+      console.error('Failed to rename session:', error)
+    }
+  },
+
+  togglePin: async (id: string) => {
+    const { sessions } = get()
+    const session = sessions[id]
+    if (!session) return
+
+    try {
+      const updatedSession = await sessionApi.updateSession(id, {
+        pinned: !session.pinned
+      })
+
+      set((state) => ({
+        sessions: {
+          ...state.sessions,
+          [id]: updatedSession,
+        },
+      }))
+    } catch (error) {
+      console.error('Failed to toggle pin:', error)
+    }
+  },
+
+  addMessage: (sessionId: string, message: Message) => {
+    set((state) => {
+      const session = state.sessions[sessionId]
+      if (!session) return state
+
+      return {
+        sessions: {
+          ...state.sessions,
+          [sessionId]: {
+            ...session,
+            messages: [...session.messages, message],
+            updatedAt: Date.now(),
+          },
+        },
+      }
+    })
+  },
+
+  appendToLastMessage: (sessionId: string, content: string) => {
+    set((state) => {
+      const session = state.sessions[sessionId]
+      if (!session || session.messages.length === 0) return state
+
+      const messages = [...session.messages]
+      const lastMessage = messages[messages.length - 1]
+
+      if (lastMessage.role === 'assistant') {
+        messages[messages.length - 1] = {
+          ...lastMessage,
+          content: lastMessage.content + content,
+        }
+      }
+
+      return {
+        sessions: {
+          ...state.sessions,
+          [sessionId]: {
+            ...session,
+            messages,
+            updatedAt: Date.now(),
+          },
+        },
+      }
+    })
+  },
+
+  updateLastMessage: (sessionId: string, content: string) => {
+    set((state) => {
+      const session = state.sessions[sessionId]
+      if (!session || session.messages.length === 0) return state
+
+      const messages = [...session.messages]
+      messages[messages.length - 1] = {
+        ...messages[messages.length - 1],
+        content,
+      }
+
+      return {
+        sessions: {
+          ...state.sessions,
+          [sessionId]: {
+            ...session,
+            messages,
+            updatedAt: Date.now(),
+          },
+        },
+      }
+    })
+  },
+
+  finishStreaming: () => {
+    set({ isStreaming: false })
+  },
+
+  setStreaming: (isStreaming: boolean) => {
+    set({ isStreaming })
+  },
+
+  setSearchQuery: (query: string) => {
+    set({ searchQuery: query })
+  },
+
+  deleteMessage: (sessionId: string, messageId: string) => {
+    set((state) => {
+      const session = state.sessions[sessionId]
+      if (!session) return state
+
+      return {
+        sessions: {
+          ...state.sessions,
+          [sessionId]: {
+            ...session,
+            messages: session.messages.filter(msg => msg.id !== messageId),
+            updatedAt: Date.now(),
+          },
+        },
+      }
+    })
+  },
+
+  setRightPanel: (panel: RightPanel) => {
+    set({ rightPanel: panel })
+  },
+
+  addTestResult: (result: TestResult) => {
+    set((state) => ({
+      testResults: [result, ...state.testResults],
+    }))
+  },
+
+  clearTestResults: () => {
+    set({ testResults: [] })
+  },
+}))

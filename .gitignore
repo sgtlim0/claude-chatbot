@@ -1,8 +1,12 @@
 node_modules/
 dist/
+.next/
+out/
 .env
 .env.local
 .vercel
 .claude/
-1
 *.tsbuildinfo
+__pycache__/
+*.pyc
+.pytest_cache/

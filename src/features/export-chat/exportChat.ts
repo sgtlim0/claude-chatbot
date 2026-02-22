@@ -1,11 +1,11 @@
-import type { ChatSession } from "@/entities/message/model";
+import type { ChatSession } from "@/entities/message";
 
 export function exportToMarkdown(session: ChatSession): string {
   let md = `# ${session.title}\n\n`;
   md += `*Created: ${new Date(session.createdAt).toLocaleString()}*\n\n---\n\n`;
 
   for (const msg of session.messages) {
-    const role = msg.role === "user" ? "**You**" : msg.role === "tool" ? "**Tool**" : "**AI**";
+    const role = msg.role === "user" ? "**You**" : "**AI**";
     md += `${role}:\n\n${msg.content}\n\n---\n\n`;
   }
 
@@ -16,7 +16,7 @@ export function exportToJson(session: ChatSession): string {
   return JSON.stringify(session, null, 2);
 }
 
-export function downloadFile(content: string, filename: string, type: string) {
+function downloadFile(content: string, filename: string, type: string) {
   const blob = new Blob([content], { type });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");

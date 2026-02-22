@@ -1,0 +1,40 @@
+{
+  "name": "basic-qa",
+  "description": "기본 Q&A 품질 평가 - 한국어 응답 정확도 테스트",
+  "metrics": ["contains", "cosine_similarity"],
+  "tags": ["qa", "korean"],
+  "test_cases": [
+    {
+      "id": "geo-1",
+      "description": "대한민국 수도",
+      "messages": [{"role": "user", "content": "대한민국의 수도는 어디인가요?"}],
+      "expected_output": "서울",
+      "tags": ["geography"]
+    },
+    {
+      "id": "math-1",
+      "description": "기본 산술",
+      "messages": [{"role": "user", "content": "1 + 1은 얼마인가요?"}],
+      "expected_output": "2",
+      "tags": ["math"]
+    },
+    {
+      "id": "greeting-1",
+      "description": "인사 응답",
+      "messages": [{"role": "user", "content": "안녕하세요"}],
+      "expected_output": "안녕하세요",
+      "tags": ["greeting"]
+    },
+    {
+      "id": "context-1",
+      "description": "멀티턴 컨텍스트 유지",
+      "messages": [
+        {"role": "user", "content": "제 이름은 김철수입니다."},
+        {"role": "assistant", "content": "안녕하세요, 김철수님!"},
+        {"role": "user", "content": "제 이름이 뭐였죠?"}
+      ],
+      "expected_output": "김철수",
+      "tags": ["context", "multi-turn"]
+    }
+  ]
+}

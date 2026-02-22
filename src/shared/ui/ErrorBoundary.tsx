@@ -1,48 +1,49 @@
-import { Component } from "react";
-import type { ReactNode, ErrorInfo } from "react";
+'use client'
+
+import React from 'react'
 
 interface Props {
-  children: ReactNode;
-  fallback?: ReactNode;
+  children: React.ReactNode
 }
 
 interface State {
-  hasError: boolean;
-  error: Error | null;
+  hasError: boolean
+  error?: Error
 }
 
-export class ErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends React.Component<Props, State> {
   constructor(props: Props) {
-    super(props);
-    this.state = { hasError: false, error: null };
+    super(props)
+    this.state = { hasError: false }
   }
 
   static getDerivedStateFromError(error: Error): State {
-    return { hasError: true, error };
+    return { hasError: true, error }
   }
 
-  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    console.error("ErrorBoundary caught:", error, errorInfo);
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught:', error, errorInfo)
   }
 
   render() {
     if (this.state.hasError) {
-      if (this.props.fallback) return this.props.fallback;
       return (
-        <div className="flex items-center justify-center p-8 text-center">
-          <div>
-            <h3 className="text-lg font-semibold text-danger mb-2">오류가 발생했습니다</h3>
-            <p className="text-sm text-text-muted mb-4">{this.state.error?.message}</p>
-            <button
-              className="px-4 py-2 bg-accent text-white rounded-lg text-sm cursor-pointer border-none hover:bg-accent-hover"
-              onClick={() => this.setState({ hasError: false, error: null })}
-            >
-              다시 시도
-            </button>
+        <div className="flex h-screen items-center justify-center">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-2">문제가 발생했습니다</h1>
+            <p className="text-[var(--color-text-secondary)]">
+              페이지를 새로고침해주세요
+            </p>
+            {this.state.error && (
+              <pre className="mt-4 text-left text-sm bg-[var(--color-bg-secondary)] p-4 rounded">
+                {this.state.error.message}
+              </pre>
+            )}
           </div>
         </div>
-      );
+      )
     }
-    return this.props.children;
+
+    return this.props.children
   }
 }

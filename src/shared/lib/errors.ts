@@ -1,24 +1,20 @@
-export class ApiError extends Error {
-  constructor(
-    message: string,
-    public readonly status: number,
-    public readonly details?: unknown
-  ) {
-    super(message);
-    this.name = "ApiError";
+export class ChatError extends Error {
+  constructor(message: string, public code?: string) {
+    super(message)
+    this.name = 'ChatError'
   }
 }
 
-export class NetworkError extends Error {
-  constructor(message: string, public readonly cause?: unknown) {
-    super(message);
-    this.name = "NetworkError";
+export class NetworkError extends ChatError {
+  constructor(message: string) {
+    super(message, 'NETWORK_ERROR')
+    this.name = 'NetworkError'
   }
 }
 
-export class ValidationError extends Error {
-  constructor(message: string, public readonly fields?: Record<string, string[]>) {
-    super(message);
-    this.name = "ValidationError";
+export class ApiError extends ChatError {
+  constructor(message: string, public status?: number) {
+    super(message, 'API_ERROR')
+    this.name = 'ApiError'
   }
 }
