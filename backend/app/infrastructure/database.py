@@ -1,18 +1,27 @@
 """MongoDB connection using Motor and Beanie"""
 
-from beanie import init_beanie
-from motor.motor_asyncio import AsyncIOMotorClient
+import os
 
 from app.config import settings
-from app.infrastructure.session.document import SessionDocument
 
 
 async def init_db():
-    """Initialize MongoDB connection and Beanie ODM"""
-    # Create Motor client
-    client = AsyncIOMotorClient(settings.mongodb_uri)
+    """Initialize MongoDB connection and Beanie ODM
 
-    # Initialize Beanie with the SessionDocument model
+    Skips initialization if MONGODB_URI is not set (e.g. during initial deploy).
+    """
+    mongodb_uri = os.environ.get("MONGODB_URI", settings.mongodb_uri)
+
+    if mongodb_uri == "mongodb://localhost:27017" and not os.environ.get("MONGODB_URI"):
+        print("WARNING: MONGODB_URI not set, skipping database initialization")
+        return
+
+    from beanie import init_beanie
+    from motor.motor_asyncio import AsyncIOMotorClient
+
+    from app.infrastructure.session.document import SessionDocument
+
+    client = AsyncIOMotorClient(mongodb_uri)
     await init_beanie(
         database=client[settings.mongodb_database_name],
         document_models=[SessionDocument],

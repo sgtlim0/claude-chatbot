@@ -7,13 +7,17 @@ import modal
 app = modal.App("cardnews-ai-chat-backend")
 
 # Modal image with all required dependencies
-image = modal.Image.debian_slim(python_version="3.12").pip_install(
-    "fastapi[standard]",
-    "langchain-aws>=0.2",
-    "langchain-core>=0.3",
-    "beanie>=1.26",
-    "motor>=3.6",
-    "pydantic-settings>=2.0",
+image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .pip_install(
+        "fastapi[standard]",
+        "langchain-aws>=0.2",
+        "langchain-core>=0.3",
+        "beanie>=1.26",
+        "motor>=3.6",
+        "pydantic-settings>=2.0",
+    )
+    .add_local_python_source("app")
 )
 
 
@@ -21,7 +25,6 @@ image = modal.Image.debian_slim(python_version="3.12").pip_install(
     image=image,
     secrets=[
         modal.Secret.from_name("aws-bedrock-secrets"),
-        modal.Secret.from_name("mongodb-secrets"),
     ],
     min_containers=1,
 )
