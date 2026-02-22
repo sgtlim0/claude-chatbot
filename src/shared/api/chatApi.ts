@@ -1,5 +1,9 @@
 import type { Message } from "@/entities/message/model";
 
+const MODAL_API_URL =
+  import.meta.env.VITE_API_URL ||
+  "https://sgtlim0--cardnews-ai-chat-api-web-app.modal.run/chat";
+
 interface StreamChatParams {
   messages: Pick<Message, "role" | "content">[];
   model: string;
@@ -23,56 +27,42 @@ export async function streamChat({
     .filter((m) => m.role === "user" || m.role === "assistant")
     .map((m) => ({ role: m.role as "user" | "assistant", content: m.content }));
 
-  const res = await fetch("/api/chat", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ messages: apiMessages, model, systemPrompt }),
-    signal,
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    onError(`API 오류 (${res.status}): ${text}`);
-    onDone();
-    return;
-  }
-
-  const reader = res.body?.getReader();
-  if (!reader) {
-    onError("응답 본문이 없습니다");
-    onDone();
-    return;
-  }
-
-  const decoder = new TextDecoder();
-  let buffer = "";
-
   try {
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
+    const res = await fetch(MODAL_API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages: apiMessages, model, systemPrompt }),
+      signal,
+    });
 
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split("\n");
-      buffer = lines.pop() || "";
+    if (!res.ok) {
+      const text = await res.text();
+      onError(`API 오류 (${res.status}): ${text}`);
+      onDone();
+      return;
+    }
 
-      for (const line of lines) {
-        if (!line.startsWith("data: ")) continue;
-        const data = line.slice(6);
-        if (data === "[DONE]") {
-          onDone();
-          return;
-        }
-        try {
-          const parsed = JSON.parse(data);
-          if (typeof parsed === "string") {
-            onChunk(parsed);
-          } else if (parsed.error) {
-            onError(parsed.error);
-          }
-        } catch {
-          // skip malformed data
-        }
+    const data = await res.json();
+
+    if (data.error) {
+      onError(data.error);
+      onDone();
+      return;
+    }
+
+    const text = data.response || "";
+    if (!text) {
+      onError("응답이 비어있습니다");
+      onDone();
+      return;
+    }
+
+    const words = text.split(/(\s+)/);
+    for (const word of words) {
+      if (signal?.aborted) break;
+      if (word) {
+        onChunk(word);
+        await new Promise((r) => setTimeout(r, 15));
       }
     }
   } catch (err) {
