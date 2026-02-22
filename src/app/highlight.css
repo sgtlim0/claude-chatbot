@@ -1,18 +1,18 @@
-/* GitHub Dark theme for highlight.js */
+/* Aether Dark theme for highlight.js */
 .hljs {
-  background: #0d1117;
+  background: #0a0f1a;
   color: #c9d1d9;
 }
 
 .hljs-comment,
 .hljs-quote {
-  color: #8b949e;
+  color: #64748b;
 }
 
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-addition {
-  color: #ff7b72;
+  color: #e8a838;
 }
 
 .hljs-string,
@@ -37,7 +37,7 @@
 .hljs-meta,
 .hljs-selector-id,
 .hljs-title {
-  color: #58a6ff;
+  color: #e8a838;
 }
 
 .hljs-built_in,

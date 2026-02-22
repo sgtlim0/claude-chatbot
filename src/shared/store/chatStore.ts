@@ -1,9 +1,11 @@
 import { create } from 'zustand'
-import { ChatSession, Message } from '@/entities/message'
+import { ChatSession, Message, TestResult } from '@/entities/message'
 import { generateId } from '../lib/generateId'
 import { getBrowserId } from '../lib/browserId'
 import { migrateLocalStorage } from '../lib/migrateLocalStorage'
 import * as sessionApi from '../api/sessionApi'
+
+type RightPanel = null | 'settings' | 'test'
 
 interface ChatStore {
   // State
@@ -12,6 +14,8 @@ interface ChatStore {
   isStreaming: boolean
   searchQuery: string
   browserId: string
+  rightPanel: RightPanel
+  testResults: TestResult[]
 
   // Actions
   initStore: () => Promise<void>
@@ -27,6 +31,9 @@ interface ChatStore {
   setSearchQuery: (query: string) => void
   updateLastMessage: (sessionId: string, content: string) => void
   deleteMessage: (sessionId: string, messageId: string) => void
+  setRightPanel: (panel: RightPanel) => void
+  addTestResult: (result: TestResult) => void
+  clearTestResults: () => void
 }
 
 export const useChatStore = create<ChatStore>((set, get) => ({
@@ -35,6 +42,8 @@ export const useChatStore = create<ChatStore>((set, get) => ({
   isStreaming: false,
   searchQuery: '',
   browserId: '',
+  rightPanel: null,
+  testResults: [],
 
   initStore: async () => {
     const browserId = getBrowserId()
@@ -257,5 +266,19 @@ export const useChatStore = create<ChatStore>((set, get) => ({
         },
       }
     })
+  },
+
+  setRightPanel: (panel: RightPanel) => {
+    set({ rightPanel: panel })
+  },
+
+  addTestResult: (result: TestResult) => {
+    set((state) => ({
+      testResults: [result, ...state.testResults],
+    }))
+  },
+
+  clearTestResults: () => {
+    set({ testResults: [] })
   },
 }))

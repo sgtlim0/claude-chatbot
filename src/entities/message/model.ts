@@ -16,3 +16,15 @@ export interface ChatSession {
   pinned: boolean
   updatedAt: number
 }
+
+export interface TestResult {
+  id: string
+  label: string
+  prompt: string
+  response: string
+  latencyMs: number
+  tokenCount: number
+  status: 'pass' | 'fail' | 'error'
+  timestamp: number
+  model: string
+}

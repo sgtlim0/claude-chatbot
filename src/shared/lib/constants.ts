@@ -1,8 +1,15 @@
 export const QUICK_PROMPTS = [
-  '코딩 도와줘',
-  '이메일 작성해줘',
-  '브레인스토밍 해보자',
-  '설명해줘',
+  'Help me write code',
+  'Draft an email',
+  'Brainstorm ideas',
+  'Explain a concept',
 ]
 
-export const DEFAULT_SYSTEM_PROMPT = '당신은 도움이 되고 정중한 AI 어시스턴트입니다.'
+export const DEFAULT_SYSTEM_PROMPT = 'You are a helpful and polite AI assistant.'
+
+export const STARTER_PROMPTS = [
+  { label: 'Write code', prompt: 'Help me write a function that...' },
+  { label: 'Explain', prompt: 'Explain in simple terms how...' },
+  { label: 'Brainstorm', prompt: 'Give me creative ideas for...' },
+  { label: 'Analyze', prompt: 'Analyze the following and provide insights...' },
+]
